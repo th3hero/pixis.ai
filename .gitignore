@@ -42,3 +42,6 @@ next-env.d.ts
 
 # Ignored MD files as they are not meant to be pushed.
 EXPLANATION.md
+branch_structure.json
+temp_auto_push.bat
+temp_interactive_push.bat
