@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Ignored MD files as they are not meant to be pushed.
+EXPLANATION.md
