@@ -109,7 +109,6 @@ pixis.ai/
 │   │
 │   └── types/                    # TypeScript types
 │
-├── EXPLANATION.md                # Detailed technical documentation
 └── env.example                   # Environment variable template
 ```
 
@@ -139,17 +138,6 @@ Pixis AI generates the following slide types:
 | `MAX_FILE_SIZE_MB` | No | 10 | Max upload size in MB |
 | `AI_TEMPERATURE` | No | 0.7 | AI response creativity (0-1) |
 | `AI_MAX_TOKENS` | No | 8192 | Max output tokens |
-
-## 📚 Documentation
-
-For a detailed technical explanation of the codebase, see [EXPLANATION.md](./EXPLANATION.md).
-
-This includes:
-- Complete architecture diagrams
-- Data flow explanations
-- Component deep dives
-- AI integration details
-- Design decisions
 
 ## ⚠️ Known Limitations
 
