@@ -3,100 +3,70 @@ import { v4 as uuidv4 } from 'uuid';
 import { generateSlideContent } from '@/src/lib/ai/orchestrator';
 import { GeneratedDeck, SlideStyle, UploadedDocument, BrandStyle, DARK_CORPORATE_STYLE } from '@/src/types';
 
-// Calculate optimal slide count based on document content
-function calculateSlideCount(documents: UploadedDocument[]): number {
-  const MIN_SLIDES = 5;
-  const MAX_SLIDES = 15;
+/**
+ * Figure out how many slides we need based on content.
+ * More content = more slides, but capped at reasonable limits.
+ */
+function calculateSlideCount(docs: UploadedDocument[]): number {
+  const totalChars = docs.reduce((sum, d) => sum + (d.content?.length || 0), 0);
+  const totalSections = docs.reduce((sum, d) => sum + (d.extractedData?.sections?.length || 0), 0);
   
-  // Calculate total content length
-  const totalContentLength = documents.reduce((acc, doc) => acc + (doc.content?.length || 0), 0);
+  // Start with basics: title + summary + takeaways
+  let count = 3;
   
-  // Count sections across all documents
-  const totalSections = documents.reduce((acc, doc) => {
-    const sections = doc.extractedData?.sections?.length || 0;
-    return acc + sections;
-  }, 0);
+  // Add based on sections (~1 slide per 1.5 sections)
+  count += Math.ceil(totalSections / 1.5);
   
-  // Base calculation:
-  // - 1 title slide
-  // - 1 executive summary
-  // - 1 agenda (if enough content)
-  // - Content slides based on sections and content length
-  // - 1 key takeaways
+  // Add based on content length (~1 slide per 2k chars, max 5 extra)
+  count += Math.min(Math.ceil(totalChars / 2000), 5);
   
-  let slideCount = 3; // Title + Executive Summary + Key Takeaways
+  // Add agenda if we have enough content
+  if (count > 4) count++;
   
-  // Add slides based on sections (1 slide per 1-2 sections)
-  slideCount += Math.ceil(totalSections / 1.5);
-  
-  // Add slides based on content length (roughly 1 slide per 2000 characters)
-  const contentBasedSlides = Math.ceil(totalContentLength / 2000);
-  slideCount += Math.min(contentBasedSlides, 5); // Cap content-based addition
-  
-  // Add agenda slide if we have enough content
-  if (slideCount > 4) {
-    slideCount += 1;
-  }
-  
-  // Ensure within bounds
-  return Math.max(MIN_SLIDES, Math.min(MAX_SLIDES, slideCount));
+  // Keep it reasonable
+  return Math.max(5, Math.min(15, count));
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { documents, style, options } = body as {
+    const { documents, style, options } = await request.json() as {
       documents: UploadedDocument[];
       style?: Partial<BrandStyle>;
-      options?: {
-        slideCount?: number;
-        focusAreas?: string[];
-        tone?: 'formal' | 'casual' | 'executive';
-      };
+      options?: { slideCount?: number; focusAreas?: string[]; tone?: 'formal' | 'casual' | 'executive' };
     };
 
-    if (!documents || documents.length === 0) {
-      return NextResponse.json(
-        { success: false, error: 'No documents provided for slide generation' },
-        { status: 400 }
-      );
+    if (!documents?.length) {
+      return NextResponse.json({ success: false, error: 'No documents provided' }, { status: 400 });
     }
 
-    // Combine document content
-    const documentContent = documents
-      .map(d => `[${d.name}]\n${d.content}`)
-      .join('\n\n---\n\n');
-
-    // Calculate dynamic slide count if not explicitly provided
+    // Combine all docs into one big string
+    const content = documents.map(d => `[${d.name}]\n${d.content}`).join('\n\n---\n\n');
     const slideCount = options?.slideCount || calculateSlideCount(documents);
 
-    // Generate slide content using AI
-    const slideContent = await generateSlideContent(documentContent, {
+    const slideContent = await generateSlideContent(content, {
       slideCount,
       focusAreas: options?.focusAreas,
       tone: options?.tone || 'executive',
     });
 
-    // Use dark corporate style as default (matching sample output)
-    const defaultStyle = DARK_CORPORATE_STYLE;
-
-    // Merge provided style with dark corporate defaults
+    // Build final style (dark theme by default)
+    const base = DARK_CORPORATE_STYLE;
     const finalStyle: SlideStyle = {
-      primaryColor: style?.colors?.primary || defaultStyle.colors.primary,
-      secondaryColor: style?.colors?.secondary || defaultStyle.colors.secondary,
-      accentColor: style?.colors?.accent || defaultStyle.colors.accent,
-      backgroundColor: style?.colors?.background || defaultStyle.colors.background,
-      foreground: '#ffffff', // White text for dark theme
+      primaryColor: style?.colors?.primary || base.colors.primary,
+      secondaryColor: style?.colors?.secondary || base.colors.secondary,
+      accentColor: style?.colors?.accent || base.colors.accent,
+      backgroundColor: style?.colors?.background || base.colors.background,
+      foreground: '#ffffff',
       fontFamily: {
-        heading: style?.typography?.headingFont || defaultStyle.typography.headingFont,
-        body: style?.typography?.bodyFont || defaultStyle.typography.bodyFont,
+        heading: style?.typography?.headingFont || base.typography.headingFont,
+        body: style?.typography?.bodyFont || base.typography.bodyFont,
       },
       fontSize: {
-        title: style?.typography?.headingSizes?.h1 || defaultStyle.typography.headingSizes.h1,
-        heading: style?.typography?.headingSizes?.h2 || defaultStyle.typography.headingSizes.h2,
-        subheading: style?.typography?.headingSizes?.h3 || defaultStyle.typography.headingSizes.h3,
-        body: style?.typography?.bodySizes?.normal || defaultStyle.typography.bodySizes.normal,
-        caption: style?.typography?.bodySizes?.caption || defaultStyle.typography.bodySizes.caption,
+        title: style?.typography?.headingSizes?.h1 || base.typography.headingSizes.h1,
+        heading: style?.typography?.headingSizes?.h2 || base.typography.headingSizes.h2,
+        subheading: style?.typography?.headingSizes?.h3 || base.typography.headingSizes.h3,
+        body: style?.typography?.bodySizes?.normal || base.typography.bodySizes.normal,
+        caption: style?.typography?.bodySizes?.caption || base.typography.bodySizes.caption,
       },
     };
 
@@ -110,13 +80,9 @@ export async function POST(request: NextRequest) {
     };
 
     return NextResponse.json({ success: true, deck });
-  } catch (error) {
-    console.error('Generation error:', error);
+  } catch (err) {
     return NextResponse.json(
-      {
-        success: false,
-        error: error instanceof Error ? error.message : 'Failed to generate presentation',
-      },
+      { success: false, error: err instanceof Error ? err.message : 'Failed to generate presentation' },
       { status: 500 }
     );
   }

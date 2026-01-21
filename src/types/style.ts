@@ -19,18 +19,8 @@ export interface BrandColors {
 export interface BrandTypography {
   headingFont: string;
   bodyFont: string;
-  headingSizes: {
-    h1: number;
-    h2: number;
-    h3: number;
-    h4: number;
-  };
-  bodySizes: {
-    large: number;
-    normal: number;
-    small: number;
-    caption: number;
-  };
+  headingSizes: { h1: number; h2: number; h3: number; h4: number };
+  bodySizes: { large: number; normal: number; small: number; caption: number };
   lineHeight: number;
 }
 
@@ -49,14 +39,14 @@ export interface ExtractedStyle {
   rawGuidelines?: string;
 }
 
-// Dark Corporate Theme (used for generated presentations)
+// Default dark theme for presentations
 export const DARK_CORPORATE_STYLE: BrandStyle = {
   id: 'dark-corporate',
   name: 'Dark Corporate',
   colors: {
-    primary: '#0a1628',
-    secondary: '#1a2744',
-    accent: '#f5b800',
+    primary: '#0a1628',    // dark navy
+    secondary: '#1a2744',  // slightly lighter
+    accent: '#f5b800',     // gold
     background: '#0a1628',
     text: '#ffffff',
     textLight: '#94a3b8',
@@ -64,18 +54,8 @@ export const DARK_CORPORATE_STYLE: BrandStyle = {
   typography: {
     headingFont: 'Arial',
     bodyFont: 'Arial',
-    headingSizes: {
-      h1: 48,
-      h2: 36,
-      h3: 28,
-      h4: 22,
-    },
-    bodySizes: {
-      large: 18,
-      normal: 14,
-      small: 12,
-      caption: 10,
-    },
+    headingSizes: { h1: 48, h2: 36, h3: 28, h4: 22 },
+    bodySizes: { large: 18, normal: 14, small: 12, caption: 10 },
     lineHeight: 1.5,
   },
 };

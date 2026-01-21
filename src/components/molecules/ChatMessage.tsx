@@ -14,34 +14,22 @@ export const ChatMessage = memo(function ChatMessage({ message, onAction }: Chat
   const isUser = message.role === 'user';
 
   return (
-    <div
-      className={cn(
-        'flex gap-3 p-3 md:p-4 rounded-xl transition-all',
-        isUser 
-          ? 'bg-secondary/50 border border-border' 
-          : 'glass'
-      )}
-    >
+    <div className={cn(
+      'flex gap-3 p-3 md:p-4 rounded-xl transition-all',
+      isUser ? 'bg-secondary/50 border border-border' : 'glass'
+    )}>
       <Avatar className={cn(
         'h-8 w-8 shrink-0 border-2',
-        isUser 
-          ? 'bg-secondary border-accent/50' 
-          : 'bg-gradient-to-br from-primary to-accent border-primary/30'
+        isUser ? 'bg-secondary border-accent/50' : 'bg-gradient-to-br from-primary to-accent border-primary/30'
       )}>
-        <AvatarFallback className={cn(
-          'text-sm',
-          isUser ? 'text-accent' : 'text-background'
-        )}>
+        <AvatarFallback className={cn('text-sm', isUser ? 'text-accent' : 'text-background')}>
           {isUser ? <User className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}
         </AvatarFallback>
       </Avatar>
 
       <div className="flex-1 min-w-0 space-y-2">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className={cn(
-            'text-sm font-medium',
-            isUser ? 'text-accent' : 'text-primary'
-          )}>
+          <span className={cn('text-sm font-medium', isUser ? 'text-accent' : 'text-primary')}>
             {isUser ? 'You' : 'Pixis AI'}
           </span>
           <span className="text-xs text-muted-foreground">
@@ -53,7 +41,7 @@ export const ChatMessage = memo(function ChatMessage({ message, onAction }: Chat
           <MessageContent content={message.content} />
         </div>
 
-        {/* Action buttons for assistant messages */}
+        {/* Actions (only for assistant) */}
         {!isUser && message.metadata?.action && (
           <div className="flex items-center gap-2 pt-2 flex-wrap">
             {message.metadata.action === 'generate' && (
@@ -84,77 +72,53 @@ export const ChatMessage = memo(function ChatMessage({ message, onAction }: Chat
   );
 });
 
+// Simple markdown renderer - handles headers, lists, bold
 function MessageContent({ content }: { content: string }) {
-  // Simple markdown-like rendering
-  const lines = content.split('\n');
-  
   return (
     <div className="space-y-2 text-sm md:text-base">
-      {lines.map((line, i) => {
-        // Headers
+      {content.split('\n').map((line, i) => {
+        // h1
         if (line.startsWith('# ')) {
-          return (
-            <h3 key={i} className="text-base md:text-lg font-semibold text-foreground mt-3 first:mt-0">
-              {line.slice(2)}
-            </h3>
-          );
+          return <h3 key={i} className="text-base md:text-lg font-semibold text-foreground mt-3 first:mt-0">{line.slice(2)}</h3>;
         }
+        // h2
         if (line.startsWith('## ')) {
-          return (
-            <h4 key={i} className="text-sm md:text-base font-semibold text-foreground mt-2">
-              {line.slice(3)}
-            </h4>
-          );
+          return <h4 key={i} className="text-sm md:text-base font-semibold text-foreground mt-2">{line.slice(3)}</h4>;
         }
-        
-        // Bullet points
+        // bullets
         if (line.startsWith('- ') || line.startsWith('* ')) {
           return (
             <div key={i} className="flex gap-2 ml-2">
               <span className="text-primary">•</span>
-              <span>{renderInlineFormatting(line.slice(2))}</span>
+              <span>{renderBold(line.slice(2))}</span>
             </div>
           );
         }
-        
-        // Numbered lists
-        const numberedMatch = line.match(/^(\d+)\.\s(.+)$/);
-        if (numberedMatch) {
+        // numbered list
+        const numMatch = line.match(/^(\d+)\.\s(.+)$/);
+        if (numMatch) {
           return (
             <div key={i} className="flex gap-2 ml-2">
-              <span className="text-accent font-medium">{numberedMatch[1]}.</span>
-              <span>{renderInlineFormatting(numberedMatch[2])}</span>
+              <span className="text-accent font-medium">{numMatch[1]}.</span>
+              <span>{renderBold(numMatch[2])}</span>
             </div>
           );
         }
-        
-        // Empty lines
-        if (!line.trim()) {
-          return <div key={i} className="h-2" />;
-        }
-        
-        // Regular paragraphs
-        return (
-          <p key={i} className="leading-relaxed">
-            {renderInlineFormatting(line)}
-          </p>
-        );
+        // empty line
+        if (!line.trim()) return <div key={i} className="h-2" />;
+        // paragraph
+        return <p key={i} className="leading-relaxed">{renderBold(line)}</p>;
       })}
     </div>
   );
 }
 
-function renderInlineFormatting(text: string): React.ReactNode {
-  // Bold text
+// Handle **bold** text
+function renderBold(text: string): React.ReactNode {
   const parts = text.split(/(\*\*[^*]+\*\*)/g);
-  
   return parts.map((part, i) => {
     if (part.startsWith('**') && part.endsWith('**')) {
-      return (
-        <strong key={i} className="font-semibold text-foreground">
-          {part.slice(2, -2)}
-        </strong>
-      );
+      return <strong key={i} className="font-semibold text-foreground">{part.slice(2, -2)}</strong>;
     }
     return part;
   });
@@ -162,9 +126,5 @@ function renderInlineFormatting(text: string): React.ReactNode {
 
 function formatTime(date: Date | string): string {
   const d = typeof date === 'string' ? new Date(date) : date;
-  return d.toLocaleTimeString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true,
-  });
+  return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
 }

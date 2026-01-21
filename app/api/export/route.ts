@@ -4,34 +4,24 @@ import { GeneratedDeck } from '@/src/types';
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { deck } = body as { deck: GeneratedDeck };
+    const { deck } = await request.json() as { deck: GeneratedDeck };
 
-    if (!deck || !deck.slides || deck.slides.length === 0) {
-      return NextResponse.json(
-        { success: false, error: 'No presentation data provided' },
-        { status: 400 }
-      );
+    if (!deck?.slides?.length) {
+      return NextResponse.json({ success: false, error: 'No presentation data provided' }, { status: 400 });
     }
 
-    // Generate PPTX
     const pptxBuffer = await createPPTX(deck);
-    const fileName = `${deck.title.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}.pptx`;
+    const filename = `${deck.title.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}.pptx`;
 
-    // Return the file as a downloadable response
     return new NextResponse(new Uint8Array(pptxBuffer), {
       headers: {
         'Content-Type': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-        'Content-Disposition': `attachment; filename="${fileName}"`,
+        'Content-Disposition': `attachment; filename="${filename}"`,
       },
     });
-  } catch (error) {
-    console.error('Export error:', error);
+  } catch (err) {
     return NextResponse.json(
-      {
-        success: false,
-        error: error instanceof Error ? error.message : 'Failed to export presentation',
-      },
+      { success: false, error: err instanceof Error ? err.message : 'Failed to export' },
       { status: 500 }
     );
   }

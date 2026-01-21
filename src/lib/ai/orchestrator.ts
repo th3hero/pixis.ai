@@ -7,73 +7,68 @@ import {
   GENERATE_RESPONSE_PROMPT,
   EXTRACT_STYLE_FROM_GUIDELINES_PROMPT,
 } from './prompts';
-import { 
-  SlideContent, 
-  ChatMessage, 
-  UploadedDocument, 
-  GeneratedDeck,
-  ChatAction,
-  BrandStyle,
-} from '@/src/types';
+import { SlideContent, ChatMessage, UploadedDocument, GeneratedDeck, ChatAction, BrandStyle } from '@/src/types';
 
-// Document Analysis
+// --- Types ---
+
 interface DocumentAnalysis {
   title: string;
   documentType: string;
   executiveSummary: string;
   keyThemes: string[];
-  mainSections: Array<{
-    title: string;
-    summary: string;
-    keyPoints: string[];
-  }>;
+  mainSections: Array<{ title: string; summary: string; keyPoints: string[] }>;
   keyFindings: string[];
   recommendations: string[];
-  dataPoints: Array<{
-    metric: string;
-    value: string;
-    context: string;
-  }>;
+  dataPoints: Array<{ metric: string; value: string; context: string }>;
   suggestedSlideCount: number;
 }
+
+interface SlideGenerationResult {
+  title: string;
+  slides: SlideContent[];
+}
+
+interface IntentClassification {
+  intent: ChatAction;
+  confidence: number;
+  entities: { slideNumbers?: number[]; specificRequest?: string; tone?: string };
+  suggestedAction: string;
+}
+
+interface ProcessedResponse {
+  content: string;
+  action?: ChatAction;
+  actionData?: unknown;
+  processingTime: number;
+}
+
+// --- Document Analysis ---
 
 export async function analyzeDocument(content: string): Promise<DocumentAnalysis> {
   const prompt = ANALYZE_DOCUMENT_PROMPT.replace('{documentContent}', content);
   return generateStructuredContent<DocumentAnalysis>(prompt);
 }
 
-// Slide Generation
-interface SlideGenerationResult {
-  title: string;
-  slides: SlideContent[];
-}
+// --- Slide Generation ---
 
 export async function generateSlideContent(
   documentContent: string,
-  options: {
-    slideCount: number;
-    focusAreas?: string[];
-    tone: 'formal' | 'casual' | 'executive';
-  }
+  options: { slideCount: number; focusAreas?: string[]; tone: 'formal' | 'casual' | 'executive' }
 ): Promise<SlideGenerationResult> {
   const prompt = GENERATE_SLIDES_PROMPT
     .replace('{documentContent}', documentContent)
-    .replace('{slideCount}', options.slideCount.toString())
+    .replace('{slideCount}', String(options.slideCount))
     .replace('{focusAreas}', options.focusAreas?.join(', ') || 'general overview')
     .replace('{tone}', options.tone);
 
   const result = await generateStructuredContent<SlideGenerationResult>(prompt);
   
-  // Ensure slides have proper order
-  result.slides = result.slides.map((slide, index) => ({
-    ...slide,
-    order: index + 1,
-  }));
+  // Make sure slides are numbered correctly
+  result.slides = result.slides.map((slide, i) => ({ ...slide, order: i + 1 }));
 
   return result;
 }
 
-// Slide Refinement
 export async function refineSlide(
   currentSlide: SlideContent,
   userFeedback: string,
@@ -87,55 +82,30 @@ export async function refineSlide(
   return generateStructuredContent<SlideContent>(prompt);
 }
 
-// Chat Intent Classification
-interface IntentClassification {
-  intent: ChatAction;
-  confidence: number;
-  entities: {
-    slideNumbers?: number[];
-    specificRequest?: string;
-    tone?: string;
-  };
-  suggestedAction: string;
-}
+// --- Chat Intent ---
 
 export async function classifyIntent(
   userMessage: string,
-  context: {
-    hasDocuments: boolean;
-    hasDeck: boolean;
-    recentActions: string[];
-  }
+  context: { hasDocuments: boolean; hasDeck: boolean; recentActions: string[] }
 ): Promise<IntentClassification> {
   const prompt = INTENT_CLASSIFICATION_PROMPT
     .replace('{userMessage}', userMessage)
-    .replace('{hasDocuments}', context.hasDocuments.toString())
-    .replace('{hasDeck}', context.hasDeck.toString())
+    .replace('{hasDocuments}', String(context.hasDocuments))
+    .replace('{hasDeck}', String(context.hasDeck))
     .replace('{recentActions}', context.recentActions.join(', '));
 
   return generateStructuredContent<IntentClassification>(prompt);
 }
 
-// Process User Message
-interface ProcessedResponse {
-  content: string;
-  action?: ChatAction;
-  actionData?: unknown;
-  processingTime: number;
-}
+// --- Main Message Handler ---
 
 export async function processUserMessage(
   userMessage: string,
-  context: {
-    documents: UploadedDocument[];
-    previousMessages: ChatMessage[];
-    currentDeck?: GeneratedDeck;
-  }
+  context: { documents: UploadedDocument[]; previousMessages: ChatMessage[]; currentDeck?: GeneratedDeck }
 ): Promise<ProcessedResponse> {
   const startTime = Date.now();
 
   try {
-    // Classify intent
     const intent = await classifyIntent(userMessage, {
       hasDocuments: context.documents.length > 0,
       hasDeck: !!context.currentDeck,
@@ -151,16 +121,17 @@ export async function processUserMessage(
 
     switch (intent.intent) {
       case 'generate':
-        if (context.documents.length === 0) {
+        if (!context.documents.length) {
           responseContent = `I'd be happy to generate a presentation for you! However, I don't see any documents uploaded yet. 
 
 Please upload your RFP, proposal, or business document first, and optionally a brand style guide. Then I can create a polished McKinsey-style slide deck for you.
 
 You can upload documents using the panel on the right.`;
         } else {
+          const docList = context.documents.map(d => `- **${d.name}** (${d.type})`).join('\n');
           responseContent = `Great! I'll generate a presentation based on your ${context.documents.length} uploaded document(s):
 
-${context.documents.map(d => `- **${d.name}** (${d.type})`).join('\n')}
+${docList}
 
 I'll create a McKinsey-style deck with:
 - Clear, action-oriented headlines
@@ -200,7 +171,7 @@ Your download will start shortly...`;
         break;
 
       case 'analyze':
-        if (context.documents.length === 0) {
+        if (!context.documents.length) {
           responseContent = `I'd be happy to analyze your documents! Please upload your RFP, proposal, or business document first.`;
         } else {
           responseContent = `Analyzing your documents to extract key insights...`;
@@ -209,8 +180,8 @@ Your download will start shortly...`;
         break;
 
       default:
-        // General question or conversation
-        const conversationContext = context.previousMessages
+        // General conversation - let the AI handle it
+        const recentContext = context.previousMessages
           .slice(-5)
           .map(m => `${m.role}: ${m.content}`)
           .join('\n');
@@ -218,20 +189,15 @@ Your download will start shortly...`;
         const prompt = GENERATE_RESPONSE_PROMPT
           .replace('{userMessage}', userMessage)
           .replace('{intent}', intent.intent)
-          .replace('{context}', conversationContext);
+          .replace('{context}', recentContext);
 
         responseContent = await generateContent(prompt, { temperature: 0.7 });
         action = 'question';
     }
 
-    return {
-      content: responseContent,
-      action,
-      actionData,
-      processingTime: Date.now() - startTime,
-    };
-  } catch (error) {
-    console.error('Error processing message:', error);
+    return { content: responseContent, action, actionData, processingTime: Date.now() - startTime };
+  } catch (err) {
+    // Something went wrong - give a friendly error
     return {
       content: `I apologize, but I encountered an issue processing your request. Could you please try again or rephrase your question?`,
       processingTime: Date.now() - startTime,
@@ -239,27 +205,19 @@ Your download will start shortly...`;
   }
 }
 
-// Style Extraction
-export async function extractStyleFromGuidelines(
-  guidelinesContent: string
-): Promise<Partial<BrandStyle>> {
-  const prompt = EXTRACT_STYLE_FROM_GUIDELINES_PROMPT.replace(
-    '{guidelinesContent}',
-    guidelinesContent
-  );
+// --- Style Extraction ---
+
+export async function extractStyleFromGuidelines(guidelinesContent: string): Promise<Partial<BrandStyle>> {
+  const prompt = EXTRACT_STYLE_FROM_GUIDELINES_PROMPT.replace('{guidelinesContent}', guidelinesContent);
 
   const result = await generateStructuredContent<{
     brandName: string;
     colors: Record<string, string>;
-    typography: {
-      headingFont: string;
-      bodyFont: string;
-    };
-    voiceAndTone: {
-      tone: string;
-    };
+    typography: { headingFont: string; bodyFont: string };
+    voiceAndTone: { tone: string };
   }>(prompt);
 
+  // Fill in defaults for anything the AI didn't extract
   return {
     name: result.brandName,
     colors: {

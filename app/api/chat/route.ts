@@ -5,22 +5,17 @@ import { ChatMessage, UploadedDocument, GeneratedDeck } from '@/src/types';
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { message, documents, previousMessages, currentDeck } = body as {
+    const { message, documents, previousMessages, currentDeck } = await request.json() as {
       message: string;
       documents: UploadedDocument[];
       previousMessages: ChatMessage[];
       currentDeck?: GeneratedDeck;
     };
 
-    if (!message || !message.trim()) {
-      return NextResponse.json(
-        { success: false, error: 'Message cannot be empty' },
-        { status: 400 }
-      );
+    if (!message?.trim()) {
+      return NextResponse.json({ success: false, error: 'Message cannot be empty' }, { status: 400 });
     }
 
-    // Process message with AI
     const response = await processUserMessage(message, {
       documents: documents || [],
       previousMessages: previousMessages || [],
@@ -33,27 +28,17 @@ export async function POST(request: NextRequest) {
       content: response.content,
       timestamp: new Date(),
       status: 'sent',
-      metadata: {
-        processingTime: response.processingTime,
-        action: response.action,
-      },
+      metadata: { processingTime: response.processingTime, action: response.action },
     };
 
     return NextResponse.json({
       success: true,
       message: assistantMessage,
-      action: response.action ? {
-        type: response.action,
-        data: response.actionData,
-      } : undefined,
+      action: response.action ? { type: response.action, data: response.actionData } : undefined,
     });
-  } catch (error) {
-    console.error('Chat error:', error);
+  } catch (err) {
     return NextResponse.json(
-      {
-        success: false,
-        error: error instanceof Error ? error.message : 'Failed to process message',
-      },
+      { success: false, error: err instanceof Error ? err.message : 'Failed to process message' },
       { status: 500 }
     );
   }

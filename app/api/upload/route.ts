@@ -3,53 +3,39 @@ import { v4 as uuidv4 } from 'uuid';
 import { parseDocument } from '@/src/lib/parsers';
 import { UploadedDocument, ParsedDocument } from '@/src/types';
 
+const ALLOWED_TYPES = [
+  'application/pdf',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // docx
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation', // pptx
+];
+
+const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
     const file = formData.get('file') as File;
-    const documentType = formData.get('type') as UploadedDocument['type'];
+    const docType = formData.get('type') as UploadedDocument['type'];
 
     if (!file) {
-      return NextResponse.json(
-        { success: false, error: 'No file provided' },
-        { status: 400 }
-      );
+      return NextResponse.json({ success: false, error: 'No file provided' }, { status: 400 });
     }
 
-    // Validate file type
-    const allowedTypes = [
-      'application/pdf',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-    ];
-
-    if (!allowedTypes.includes(file.type)) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid file type. Please upload PDF, DOCX, or PPTX files.' },
-        { status: 400 }
-      );
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      return NextResponse.json({ success: false, error: 'Invalid file type. Use PDF, DOCX, or PPTX.' }, { status: 400 });
     }
 
-    // Validate file size (10MB max)
-    const maxSize = 10 * 1024 * 1024;
-    if (file.size > maxSize) {
-      return NextResponse.json(
-        { success: false, error: 'File size exceeds 10MB limit.' },
-        { status: 400 }
-      );
+    if (file.size > MAX_SIZE) {
+      return NextResponse.json({ success: false, error: 'File too large. Max 10MB.' }, { status: 400 });
     }
 
-    // Convert file to buffer for parsing
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-
-    // Parse document content
+    const buffer = Buffer.from(await file.arrayBuffer());
     const parsed: ParsedDocument = await parseDocument(buffer, file.type, file.name);
 
-    const document: UploadedDocument = {
+    const doc: UploadedDocument = {
       id: uuidv4(),
       name: file.name,
-      type: documentType || 'rfp',
+      type: docType || 'rfp',
       mimeType: file.type,
       size: file.size,
       content: parsed.text,
@@ -62,14 +48,10 @@ export async function POST(request: NextRequest) {
       uploadedAt: new Date(),
     };
 
-    return NextResponse.json({ success: true, document });
-  } catch (error) {
-    console.error('Upload error:', error);
+    return NextResponse.json({ success: true, document: doc });
+  } catch (err) {
     return NextResponse.json(
-      { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Failed to process document' 
-      },
+      { success: false, error: err instanceof Error ? err.message : 'Failed to process document' },
       { status: 500 }
     );
   }

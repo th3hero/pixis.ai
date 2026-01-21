@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI, GenerativeModel, GenerationConfig } from '@google/generative-ai';
 
+// Singleton - we only need one client
 let genAI: GoogleGenerativeAI | null = null;
 
 const DEFAULT_CONFIG: GenerationConfig = {
@@ -12,9 +13,7 @@ const DEFAULT_CONFIG: GenerationConfig = {
 export function getGeminiClient(): GoogleGenerativeAI {
   if (!genAI) {
     const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      throw new Error('GEMINI_API_KEY environment variable is not set');
-    }
+    if (!apiKey) throw new Error('GEMINI_API_KEY environment variable is not set');
     genAI = new GoogleGenerativeAI(apiKey);
   }
   return genAI;
@@ -22,21 +21,13 @@ export function getGeminiClient(): GoogleGenerativeAI {
 
 export function getModel(modelName?: string): GenerativeModel {
   const client = getGeminiClient();
-  // Use environment variable or default to gemini-2.0-flash
-  const model = modelName || process.env.GEMINI_MODEL || 'gemini-2.0-flash';
-  return client.getGenerativeModel({ 
-    model,
-    generationConfig: DEFAULT_CONFIG,
-  });
+  const name = modelName || process.env.GEMINI_MODEL || 'gemini-2.0-flash';
+  return client.getGenerativeModel({ model: name, generationConfig: DEFAULT_CONFIG });
 }
 
 export async function generateContent(
   prompt: string,
-  options?: {
-    model?: string;
-    temperature?: number;
-    maxTokens?: number;
-  }
+  options?: { model?: string; temperature?: number; maxTokens?: number }
 ): Promise<string> {
   const model = getModel(options?.model);
   
@@ -51,29 +42,26 @@ export async function generateContent(
     generationConfig: config,
   });
 
-  const response = result.response;
-  return response.text();
+  return result.response.text();
 }
 
+/**
+ * Same as generateContent but parses JSON from the response.
+ * Uses lower temperature by default for more consistent output.
+ */
 export async function generateStructuredContent<T>(
   prompt: string,
-  options?: {
-    model?: string;
-    temperature?: number;
-  }
+  options?: { model?: string; temperature?: number }
 ): Promise<T> {
   const response = await generateContent(prompt, {
     ...options,
-    temperature: options?.temperature ?? 0.3, // Lower temperature for structured output
+    temperature: options?.temperature ?? 0.3,
   });
   
-  // Extract JSON from response
-  const jsonMatch = response.match(/```json\n?([\s\S]*?)\n?```/) || 
-                    response.match(/\{[\s\S]*\}/);
+  // Try to find JSON in markdown code block first, then raw JSON
+  const jsonMatch = response.match(/```json\n?([\s\S]*?)\n?```/) || response.match(/\{[\s\S]*\}/);
   
-  if (!jsonMatch) {
-    throw new Error('Failed to extract JSON from response');
-  }
+  if (!jsonMatch) throw new Error('Failed to extract JSON from response');
   
   const jsonStr = jsonMatch[1] || jsonMatch[0];
   return JSON.parse(jsonStr) as T;
@@ -81,14 +69,11 @@ export async function generateStructuredContent<T>(
 
 export async function chat(
   messages: Array<{ role: 'user' | 'model'; content: string }>,
-  options?: {
-    model?: string;
-    temperature?: number;
-  }
+  options?: { model?: string; temperature?: number }
 ): Promise<string> {
   const model = getModel(options?.model);
   
-  const chat = model.startChat({
+  const chatSession = model.startChat({
     history: messages.slice(0, -1).map(m => ({
       role: m.role,
       parts: [{ text: m.content }],
@@ -99,8 +84,8 @@ export async function chat(
     },
   });
 
-  const lastMessage = messages[messages.length - 1];
-  const result = await chat.sendMessage(lastMessage.content);
+  const lastMsg = messages[messages.length - 1];
+  const result = await chatSession.sendMessage(lastMsg.content);
   
   return result.response.text();
 }
