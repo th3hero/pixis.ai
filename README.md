@@ -7,8 +7,6 @@
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-4.0-38B2AC?logo=tailwind-css)](https://tailwindcss.com/)
 [![Google Gemini](https://img.shields.io/badge/Gemini-AI-4285F4?logo=google)](https://ai.google.dev/)
 
-![Pixis AI Demo](https://via.placeholder.com/800x400/0a0e17/00d4ff?text=Pixis+AI+-+Document+to+Slides)
-
 ## ✨ Features
 
 - **📄 Document Ingestion** - Upload PDF, DOCX, or PPTX files
@@ -73,9 +71,9 @@
 
 | Layer | Technology | Purpose |
 |-------|------------|---------|
-| Frontend | Next.js 16 (App Router) | SSR-first React framework |
+| Frontend | Next.js 16 (App Router) | Full-stack React framework |
 | UI Components | shadcn/ui + Tailwind CSS | Component library |
-| State Management | Zustand | Client-side UI state |
+| State Management | React useState/useCallback | Local component state |
 | AI/LLM | Google Gemini API | Document analysis & content generation |
 | Document Parsing | unpdf, mammoth, jszip | PDF, DOCX, PPTX extraction |
 | Slide Generation | pptxgenjs | PowerPoint file creation |
@@ -95,48 +93,63 @@ pixis.ai/
 │
 ├── src/
 │   ├── components/               # React Components (Atomic Design)
-│   │   ├── atoms/                # Basic building blocks
-│   │   ├── molecules/            # Combinations of atoms
-│   │   ├── organisms/            # Complex UI sections
-│   │   ├── templates/            # Page layouts
-│   │   └── ui/                   # shadcn components
+│   │   ├── atoms/                # Basic building blocks (Logo, Spinner)
+│   │   ├── molecules/            # Combinations of atoms (ChatMessage, FileUploader)
+│   │   ├── organisms/            # Complex UI sections (ChatWindow, DocumentPanel)
+│   │   ├── templates/            # Page layouts (ChatLayout)
+│   │   └── ui/                   # shadcn/ui components
 │   │
 │   ├── lib/                      # Core business logic
 │   │   ├── parsers/              # Document parsing (PDF, DOCX, PPTX)
 │   │   ├── ai/                   # AI/LLM integration
-│   │   │   ├── gemini-client.ts  # Gemini API client
+│   │   │   ├── gemini-client.ts  # Gemini API wrapper
 │   │   │   ├── orchestrator.ts   # AI workflow orchestration
 │   │   │   └── prompts/          # Prompt templates
 │   │   └── slides/               # Slide generation engine
 │   │
-│   ├── store/                    # Zustand store
 │   └── types/                    # TypeScript types
 │
-└── docs/                         # Documentation
+├── EXPLANATION.md                # Detailed technical documentation
+└── env.example                   # Environment variable template
 ```
 
 ## 🎨 Slide Types
 
-Pixis AI can generate the following slide types:
+Pixis AI generates the following slide types:
 
-- **Title Slide** - Opening slide with presentation title
-- **Executive Summary** - Key takeaways and recommendations
-- **Agenda** - Outline of presentation structure
-- **Section Header** - Transition slides for new sections
-- **Content** - Standard content with bullets or text
-- **Two-Column** - Side-by-side comparison
-- **Chart** - Data visualization
-- **Comparison** - Before/after or option comparison
-- **Key Takeaways** - Summary of main points
+| Type | Description |
+|------|-------------|
+| **Title Slide** | Opening slide with presentation title and tagline |
+| **Executive Summary** | Key takeaways and recommendations |
+| **Agenda** | Outline of presentation structure |
+| **Section Header** | Transition slides for new sections |
+| **Content** | Standard content with bullets or text |
+| **Two-Column** | Side-by-side comparison |
+| **Chart** | Data visualization (bar, line, pie) |
+| **Comparison** | Before/after or option comparison |
+| **Key Takeaways** | Summary of main points |
 
 ## 🔧 Environment Variables
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `GEMINI_API_KEY` | Yes | Google Gemini API key |
-| `NEXT_PUBLIC_APP_NAME` | No | App name (default: Pixis AI) |
-| `GEMINI_MODEL` | No | Model to use (default: gemini-1.5-flash-latest) |
-| `MAX_FILE_SIZE_MB` | No | Max upload size (default: 10) |
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `GEMINI_API_KEY` | ✅ Yes | - | Google Gemini API key |
+| `NEXT_PUBLIC_APP_NAME` | No | Pixis AI | App name displayed in UI |
+| `GEMINI_MODEL` | No | gemini-2.0-flash | Gemini model to use |
+| `MAX_FILE_SIZE_MB` | No | 10 | Max upload size in MB |
+| `AI_TEMPERATURE` | No | 0.7 | AI response creativity (0-1) |
+| `AI_MAX_TOKENS` | No | 8192 | Max output tokens |
+
+## 📚 Documentation
+
+For a detailed technical explanation of the codebase, see [EXPLANATION.md](./EXPLANATION.md).
+
+This includes:
+- Complete architecture diagrams
+- Data flow explanations
+- Component deep dives
+- AI integration details
+- Design decisions
 
 ## ⚠️ Known Limitations
 
@@ -154,7 +167,7 @@ Pixis AI can generate the following slide types:
 - [ ] Google Slides export
 - [ ] Image extraction from documents
 - [ ] Advanced chart generation
-- [ ] Presentation analytics
+- [ ] User authentication & history
 
 ## 🤝 Contributing
 
@@ -182,6 +195,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [Google Gemini](https://ai.google.dev/) - AI/LLM
 - [pptxgenjs](https://gitbrent.github.io/PptxGenJS/) - PowerPoint generation
 - [Tailwind CSS](https://tailwindcss.com/) - Styling
+- [unpdf](https://github.com/nicholasgriffintn/unpdf) - PDF parsing
 
 ---
 
