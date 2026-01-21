@@ -7,23 +7,32 @@ Create a professional slide deck based on the following document content:
 </document>
 
 Requirements:
-- Generate exactly {slideCount} slides
+- Generate {slideCount} slides (this is the target, you may generate slightly more or fewer based on content needs, but stay close to this number)
+- Minimum 5 slides, maximum 15 slides
 - Use McKinsey consulting style: clear headlines that state the key takeaway, structured content, data-driven insights
 - Each slide title should be an action-oriented statement (not just a topic)
 - Focus areas: {focusAreas}
 - Tone: {tone}
 
+Recommended slide structure for a comprehensive presentation:
+1. Title slide (required)
+2. Executive Summary / Key Insights (required)
+3. Agenda / Overview (if 7+ slides)
+4. Section headers for major topics
+5. Content slides with detailed information
+6. Key Takeaways / Recommendations (required)
+
 Slide types available:
 - title: Opening slide with presentation title and subtitle
 - executive-summary: Key takeaways and recommendations overview
-- agenda: Outline of presentation structure
+- agenda: Outline of presentation structure (use for 7+ slide decks)
 - section-header: Transition slide for new sections
 - content: Standard content slide with bullets or text
 - two-column: Comparison or side-by-side content
-- chart: Data visualization slide
+- chart: Data visualization slide (include chart data if numbers are available)
 - comparison: Before/after or option comparison
 - timeline: Sequential events or milestones
-- key-takeaways: Summary of main points
+- key-takeaways: Summary of main points (use as final slide)
 - appendix: Supporting details
 
 Return the slides in this JSON format:
@@ -65,10 +74,14 @@ Return the slides in this JSON format:
 Guidelines for McKinsey-style slides:
 1. Headlines should be complete sentences that state the "so what"
 2. Use the pyramid principle: lead with conclusion, then support
-3. Limit bullets to 3-5 per slide
+3. Limit bullets to 3-5 per slide for readability
 4. Include specific numbers and data points where available
 5. Each slide should have one clear message
-6. Use action verbs in recommendations`;
+6. Use action verbs in recommendations
+7. Create section headers to organize content logically
+8. End with clear, actionable key takeaways
+
+IMPORTANT: Generate enough slides to cover all the key information from the document. Don't compress too much content into too few slides.`;
 
 export const REFINE_SLIDE_PROMPT = `You are refining a specific slide in a McKinsey-style presentation.
 

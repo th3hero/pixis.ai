@@ -8,14 +8,14 @@ interface SpinnerProps {
 const sizeMap = {
   sm: 'h-4 w-4 border-2',
   md: 'h-6 w-6 border-2',
-  lg: 'h-8 w-8 border-3',
+  lg: 'h-8 w-8 border-[3px]',
 };
 
 export function Spinner({ size = 'md', className }: SpinnerProps) {
   return (
     <div
       className={cn(
-        'animate-spin rounded-full border-indigo-200 border-t-indigo-600',
+        'animate-spin rounded-full border-primary/20 border-t-primary',
         sizeMap[size],
         className
       )}

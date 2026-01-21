@@ -23,8 +23,7 @@ export async function parseDOCX(buffer: Buffer): Promise<ParsedDocument> {
       sections,
     };
   } catch (error) {
-    console.error('DOCX parsing error:', error);
-    throw new Error('Failed to parse DOCX document');
+    throw new Error(`Failed to parse DOCX document: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
 

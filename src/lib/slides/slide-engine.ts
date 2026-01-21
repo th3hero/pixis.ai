@@ -10,10 +10,10 @@ export async function createPPTX(deck: GeneratedDeck): Promise<Buffer> {
   const pptx = new PptxGenJS();
   
   // Set presentation properties
-  pptx.author = 'DeckForge AI';
+  pptx.author = 'Pixis AI';
   pptx.title = deck.title;
   pptx.subject = 'Generated Presentation';
-  pptx.company = 'DeckForge AI';
+  pptx.company = 'Pixis AI';
   
   // Set default slide size (16:9)
   pptx.defineLayout({ name: 'LAYOUT_16x9', width: 10, height: 5.625 });
@@ -75,37 +75,71 @@ function createTitleSlide(
   content: SlideContent,
   style: SlideStyle
 ): void {
-  // Background
+  // Dark gradient background
   slide.background = { color: formatColor(style.primaryColor) };
+
+  // Add subtle gradient overlay effect using shapes
+  slide.addShape('rect', {
+    x: 0,
+    y: 0,
+    w: 10,
+    h: 5.625,
+    fill: {
+      type: 'solid',
+      color: formatColor(style.primaryColor),
+    },
+  });
+
+  // Decorative accent line
+  slide.addShape('rect', {
+    x: 0.5,
+    y: 3.2,
+    w: 2.5,
+    h: 0.05,
+    fill: { color: formatColor(style.accentColor) },
+  });
 
   // Main title
   slide.addText(content.title, {
     x: 0.5,
-    y: 2,
-    w: 9,
-    h: 1.2,
+    y: 1.2,
+    w: 6,
+    h: 1.8,
     fontSize: style.fontSize.title,
     fontFace: style.fontFamily.heading,
     color: 'FFFFFF',
     bold: true,
-    align: 'center',
-    valign: 'middle',
+    align: 'left',
+    valign: 'top',
   });
 
-  // Subtitle
+  // Subtitle with accent color
   if (content.subtitle) {
     slide.addText(content.subtitle, {
       x: 0.5,
-      y: 3.3,
-      w: 9,
+      y: 2.6,
+      w: 6,
       h: 0.6,
       fontSize: style.fontSize.subheading,
       fontFace: style.fontFamily.body,
-      color: 'FFFFFF',
-      align: 'center',
-      valign: 'middle',
+      color: formatColor(style.accentColor),
+      align: 'left',
+      valign: 'top',
     });
   }
+
+  // Tagline (if available in notes or use default)
+  slide.addText('Future, Faster. Together', {
+    x: 0.5,
+    y: 3.4,
+    w: 4,
+    h: 0.5,
+    fontSize: style.fontSize.body,
+    fontFace: style.fontFamily.body,
+    color: formatColor(style.accentColor),
+    bold: true,
+    align: 'left',
+  });
 
   // Date
   const today = new Date().toLocaleDateString('en-US', {
@@ -114,14 +148,17 @@ function createTitleSlide(
   });
   slide.addText(today, {
     x: 0.5,
-    y: 4.8,
-    w: 9,
+    y: 3.9,
+    w: 4,
     h: 0.4,
     fontSize: style.fontSize.caption,
     fontFace: style.fontFamily.body,
-    color: 'CCCCCC',
-    align: 'center',
+    color: 'AAAAAA',
+    align: 'left',
   });
+
+  // Brand mark in corner
+  addBrandMark(slide, style);
 }
 
 function createExecutiveSummarySlide(
@@ -129,10 +166,11 @@ function createExecutiveSummarySlide(
   content: SlideContent,
   style: SlideStyle
 ): void {
+  addDarkBackground(slide, style);
   addSlideHeader(slide, content.title, style);
   
   // Add content blocks
-  let yPosition = 1.2;
+  let yPosition = 1.4;
   for (const block of content.content) {
     if (block.type === 'bullets') {
       const bulletData = block.data as BulletContent;
@@ -143,7 +181,8 @@ function createExecutiveSummarySlide(
     }
   }
 
-  addSlideFooter(slide, style);
+  addSlideFooter(slide, content.order, style);
+  addBrandMark(slide, style);
 }
 
 function createAgendaSlide(
@@ -151,9 +190,10 @@ function createAgendaSlide(
   content: SlideContent,
   style: SlideStyle
 ): void {
+  addDarkBackground(slide, style);
   addSlideHeader(slide, content.title || 'Agenda', style);
   
-  let yPosition = 1.4;
+  let yPosition = 1.6;
   for (const block of content.content) {
     if (block.type === 'bullets' || block.type === 'numbered-list') {
       const bulletData = block.data as BulletContent;
@@ -161,7 +201,8 @@ function createAgendaSlide(
     }
   }
 
-  addSlideFooter(slide, style);
+  addSlideFooter(slide, content.order, style);
+  addBrandMark(slide, style);
 }
 
 function createSectionHeaderSlide(
@@ -169,20 +210,32 @@ function createSectionHeaderSlide(
   content: SlideContent,
   style: SlideStyle
 ): void {
-  // Accent color background stripe
+  // Dark background
+  slide.background = { color: formatColor(style.primaryColor) };
+
+  // Accent stripe
   slide.addShape('rect', {
     x: 0,
-    y: 2,
+    y: 2.2,
     w: 10,
-    h: 1.5,
+    h: 1.2,
     fill: { color: formatColor(style.secondaryColor) },
+  });
+
+  // Accent line above title
+  slide.addShape('rect', {
+    x: 0.5,
+    y: 2.1,
+    w: 2,
+    h: 0.04,
+    fill: { color: formatColor(style.accentColor) },
   });
 
   slide.addText(content.title, {
     x: 0.5,
-    y: 2.2,
+    y: 2.4,
     w: 9,
-    h: 1,
+    h: 0.8,
     fontSize: style.fontSize.heading,
     fontFace: style.fontFamily.heading,
     color: 'FFFFFF',
@@ -199,10 +252,13 @@ function createSectionHeaderSlide(
       h: 0.5,
       fontSize: style.fontSize.body,
       fontFace: style.fontFamily.body,
-      color: formatColor(style.primaryColor),
+      color: formatColor(style.accentColor),
       align: 'left',
     });
   }
+
+  addSlideFooter(slide, content.order, style);
+  addBrandMark(slide, style);
 }
 
 function createContentSlide(
@@ -210,9 +266,10 @@ function createContentSlide(
   content: SlideContent,
   style: SlideStyle
 ): void {
+  addDarkBackground(slide, style);
   addSlideHeader(slide, content.title, style);
   
-  let yPosition = 1.2;
+  let yPosition = 1.4;
   for (const block of content.content) {
     switch (block.type) {
       case 'bullets':
@@ -230,7 +287,8 @@ function createContentSlide(
     }
   }
 
-  addSlideFooter(slide, style);
+  addSlideFooter(slide, content.order, style);
+  addBrandMark(slide, style);
 }
 
 function createTwoColumnSlide(
@@ -238,6 +296,7 @@ function createTwoColumnSlide(
   content: SlideContent,
   style: SlideStyle
 ): void {
+  addDarkBackground(slide, style);
   addSlideHeader(slide, content.title, style);
   
   // Split content into two columns
@@ -245,7 +304,7 @@ function createTwoColumnSlide(
   const rightContent = content.content.slice(Math.ceil(content.content.length / 2));
 
   // Left column
-  let leftY = 1.2;
+  let leftY = 1.4;
   for (const block of leftContent) {
     if (block.type === 'bullets') {
       const bulletData = block.data as BulletContent;
@@ -254,7 +313,7 @@ function createTwoColumnSlide(
   }
 
   // Right column
-  let rightY = 1.2;
+  let rightY = 1.4;
   for (const block of rightContent) {
     if (block.type === 'bullets') {
       const bulletData = block.data as BulletContent;
@@ -262,16 +321,17 @@ function createTwoColumnSlide(
     }
   }
 
-  // Divider line
-  slide.addShape('line', {
+  // Divider line with accent color
+  slide.addShape('rect', {
     x: 4.9,
-    y: 1.2,
-    w: 0,
-    h: 3.8,
-    line: { color: formatColor(style.accentColor), width: 1 },
+    y: 1.4,
+    w: 0.02,
+    h: 3.5,
+    fill: { color: formatColor(style.accentColor) },
   });
 
-  addSlideFooter(slide, style);
+  addSlideFooter(slide, content.order, style);
+  addBrandMark(slide, style);
 }
 
 function createChartSlide(
@@ -279,6 +339,7 @@ function createChartSlide(
   content: SlideContent,
   style: SlideStyle
 ): void {
+  addDarkBackground(slide, style);
   addSlideHeader(slide, content.title, style);
   
   for (const block of content.content) {
@@ -288,7 +349,8 @@ function createChartSlide(
     }
   }
 
-  addSlideFooter(slide, style);
+  addSlideFooter(slide, content.order, style);
+  addBrandMark(slide, style);
 }
 
 function createComparisonSlide(
@@ -296,30 +358,31 @@ function createComparisonSlide(
   content: SlideContent,
   style: SlideStyle
 ): void {
+  addDarkBackground(slide, style);
   addSlideHeader(slide, content.title, style);
   
-  // Create comparison boxes
+  // Create comparison boxes with dark theme
   const boxWidth = 4.2;
-  const boxHeight = 3.5;
+  const boxHeight = 3.2;
   
   // Left box
   slide.addShape('rect', {
     x: 0.5,
-    y: 1.2,
+    y: 1.4,
     w: boxWidth,
     h: boxHeight,
-    fill: { color: 'F5F5F5' },
-    line: { color: formatColor(style.primaryColor), width: 2 },
+    fill: { color: formatColor(style.secondaryColor) },
+    line: { color: formatColor(style.accentColor), width: 1 },
   });
 
   // Right box
   slide.addShape('rect', {
     x: 5.3,
-    y: 1.2,
+    y: 1.4,
     w: boxWidth,
     h: boxHeight,
-    fill: { color: 'F5F5F5' },
-    line: { color: formatColor(style.secondaryColor), width: 2 },
+    fill: { color: formatColor(style.secondaryColor) },
+    line: { color: formatColor(style.accentColor), width: 1 },
   });
 
   // Add content to boxes
@@ -327,11 +390,12 @@ function createComparisonSlide(
     const leftData = content.content[0].data as BulletContent;
     const rightData = content.content[1].data as BulletContent;
     
-    addBulletPoints(slide, leftData, 1.4, style, false, 0.7, 3.8);
-    addBulletPoints(slide, rightData, 1.4, style, false, 5.5, 3.8);
+    addBulletPoints(slide, leftData, 1.6, style, false, 0.7, 3.8);
+    addBulletPoints(slide, rightData, 1.6, style, false, 5.5, 3.8);
   }
 
-  addSlideFooter(slide, style);
+  addSlideFooter(slide, content.order, style);
+  addBrandMark(slide, style);
 }
 
 function createKeyTakeawaysSlide(
@@ -339,18 +403,20 @@ function createKeyTakeawaysSlide(
   content: SlideContent,
   style: SlideStyle
 ): void {
-  // Special styling for key takeaways
+  addDarkBackground(slide, style);
+  
+  // Accent stripe on left
   slide.addShape('rect', {
     x: 0,
     y: 0,
-    w: 0.3,
+    w: 0.15,
     h: 5.625,
     fill: { color: formatColor(style.accentColor) },
   });
 
   addSlideHeader(slide, content.title || 'Key Takeaways', style);
   
-  let yPosition = 1.4;
+  let yPosition = 1.6;
   for (const block of content.content) {
     if (block.type === 'bullets') {
       const bulletData = block.data as BulletContent;
@@ -359,31 +425,60 @@ function createKeyTakeawaysSlide(
     }
   }
 
-  addSlideFooter(slide, style);
+  addSlideFooter(slide, content.order, style);
+  addBrandMark(slide, style);
 }
 
 // Helper functions
+function addDarkBackground(slide: PptxGenJS.Slide, style: SlideStyle): void {
+  slide.background = { color: formatColor(style.primaryColor) };
+}
+
+function addBrandMark(slide: PptxGenJS.Slide, style: SlideStyle): void {
+  // Brand mark in top-left corner
+  slide.addText('PIXIS', {
+    x: 0.3,
+    y: 0.2,
+    w: 0.8,
+    h: 0.3,
+    fontSize: 10,
+    fontFace: style.fontFamily.heading,
+    color: formatColor(style.accentColor),
+    bold: true,
+    align: 'left',
+  });
+}
+
 function addSlideHeader(
   slide: PptxGenJS.Slide,
   title: string,
   style: SlideStyle
 ): void {
-  // Header background
+  // Header background bar
   slide.addShape('rect', {
     x: 0,
-    y: 0,
+    y: 0.6,
     w: 10,
-    h: 1,
-    fill: { color: formatColor(style.primaryColor) },
+    h: 0.7,
+    fill: { color: formatColor(style.secondaryColor) },
+  });
+
+  // Accent line under header
+  slide.addShape('rect', {
+    x: 0,
+    y: 1.3,
+    w: 10,
+    h: 0.03,
+    fill: { color: formatColor(style.accentColor) },
   });
 
   // Title text
   slide.addText(title, {
     x: 0.5,
-    y: 0.15,
+    y: 0.65,
     w: 9,
-    h: 0.7,
-    fontSize: style.fontSize.heading - 6,
+    h: 0.6,
+    fontSize: style.fontSize.heading - 8,
     fontFace: style.fontFamily.heading,
     color: 'FFFFFF',
     bold: true,
@@ -394,27 +489,29 @@ function addSlideHeader(
 
 function addSlideFooter(
   slide: PptxGenJS.Slide,
+  pageNumber: number,
   style: SlideStyle
 ): void {
   // Footer line
-  slide.addShape('line', {
+  slide.addShape('rect', {
     x: 0.5,
-    y: 5.2,
+    y: 5.1,
     w: 9,
-    h: 0,
-    line: { color: formatColor(style.accentColor), width: 1 },
+    h: 0.02,
+    fill: { color: formatColor(style.accentColor) },
   });
 
-  // Page number placeholder
-  slide.addText('', {
-    x: 9,
-    y: 5.3,
+  // Page number
+  slide.addText(pageNumber.toString(), {
+    x: 0.3,
+    y: 5.2,
     w: 0.5,
     h: 0.3,
-    fontSize: 10,
+    fontSize: 12,
     fontFace: style.fontFamily.body,
-    color: formatColor(style.primaryColor),
-    align: 'right',
+    color: 'FFFFFF',
+    bold: true,
+    align: 'left',
   });
 }
 
@@ -427,31 +524,36 @@ function addBulletPoints(
   startX: number = 0.5,
   width: number = 9
 ): number {
-  const textRows: PptxGenJS.TextProps[] = bulletData.items.map((item, index) => ({
-    text: item.text,
-    options: {
-      bullet: numbered ? { type: 'number' } : { code: '2022' },
-      indentLevel: 0,
-      fontSize: style.fontSize.body,
-      fontFace: style.fontFamily.body,
-      color: formatColor(style.primaryColor),
-      paraSpaceBefore: 6,
-      paraSpaceAfter: 3,
-    },
-  }));
-
-  // Add sub-items
+  const textRows: PptxGenJS.TextProps[] = [];
+  
   bulletData.items.forEach((item, index) => {
+    // Main bullet point
+    textRows.push({
+      text: item.text,
+      options: {
+        bullet: numbered 
+          ? { type: 'number' } 
+          : { characterCode: '25CF' },
+        indentLevel: 0,
+        fontSize: style.fontSize.body,
+        fontFace: style.fontFamily.body,
+        color: 'FFFFFF',
+        paraSpaceBefore: 8,
+        paraSpaceAfter: 4,
+      },
+    });
+
+    // Sub-items
     if (item.subItems && item.subItems.length > 0) {
       item.subItems.forEach(subItem => {
-        textRows.splice(index + 1, 0, {
+        textRows.push({
           text: subItem,
           options: {
-            bullet: { code: '2013' },
+            bullet: { characterCode: '2013' },
             indentLevel: 1,
             fontSize: style.fontSize.body - 2,
             fontFace: style.fontFamily.body,
-            color: '666666',
+            color: 'AAAAAA',
             paraSpaceBefore: 2,
             paraSpaceAfter: 2,
           },
@@ -460,7 +562,7 @@ function addBulletPoints(
     }
   });
 
-  const estimatedHeight = textRows.length * 0.35;
+  const estimatedHeight = textRows.length * 0.38;
   
   slide.addText(textRows, {
     x: startX,
@@ -490,7 +592,7 @@ function addTextBlock(
     h: 0.8,
     fontSize: fontSize,
     fontFace: style.fontFamily.body,
-    color: formatColor(style.primaryColor),
+    color: textData.style === 'emphasis' ? formatColor(style.accentColor) : 'FFFFFF',
     bold: textData.style === 'emphasis',
     align: 'left',
     valign: 'top',
@@ -511,7 +613,7 @@ function addTable(
       text: header,
       options: {
         bold: true,
-        fill: { color: formatColor(style.primaryColor) },
+        fill: { color: formatColor(style.secondaryColor) },
         color: 'FFFFFF',
         fontSize: style.fontSize.body,
         fontFace: style.fontFamily.body,
@@ -524,7 +626,8 @@ function addTable(
         options: {
           fontSize: style.fontSize.body - 1,
           fontFace: style.fontFamily.body,
-          color: formatColor(style.primaryColor),
+          color: 'FFFFFF',
+          fill: { color: formatColor(style.primaryColor) },
         },
       }))
     ),
@@ -561,14 +664,16 @@ function addChart(
 
   slide.addChart(chartType as PptxGenJS.CHART_NAME, data, {
     x: 1,
-    y: 1.3,
+    y: 1.5,
     w: 8,
-    h: 3.5,
+    h: 3.2,
     showLegend: true,
     legendPos: 'b',
+    legendColor: 'FFFFFF',
     showTitle: !!chartData.title,
     title: chartData.title,
     titleFontSize: style.fontSize.body,
-    titleColor: formatColor(style.primaryColor),
+    titleColor: 'FFFFFF',
+    chartColors: [formatColor(style.accentColor), '00A3E0', 'F5B800', 'E74C3C', '2ECC71'],
   });
 }

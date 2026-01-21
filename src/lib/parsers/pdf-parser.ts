@@ -1,45 +1,68 @@
-import { PDFParse } from 'pdf-parse';
 import { ParsedDocument, DocumentSection } from '@/src/types';
 import { v4 as uuidv4 } from 'uuid';
+import { extractText, getDocumentProxy } from 'unpdf';
 
 export async function parsePDF(buffer: Buffer): Promise<ParsedDocument> {
-  let parser: PDFParse | null = null;
-  
   try {
-    // Initialize parser with buffer data
-    parser = new PDFParse({ data: buffer });
+    // Create a fresh copy of the buffer data to avoid detached ArrayBuffer issues
+    const uint8Array = new Uint8Array(buffer.length);
+    for (let i = 0; i < buffer.length; i++) {
+      uint8Array[i] = buffer[i];
+    }
     
-    // Get text content
-    const textResult = await parser.getText();
-    const text = textResult.text;
+    // Extract text from all pages
+    const { text, totalPages } = await extractText(uint8Array, {
+      mergePages: true,
+    });
     
-    // Get metadata/info
-    const infoResult = await parser.getInfo({ parsePageInfo: true });
+    // Get metadata using a fresh copy of the data
+    let title: string | undefined;
+    let author: string | undefined;
+    let createdAt: string | undefined;
+    
+    try {
+      // Create another fresh copy for metadata extraction
+      const metadataArray = new Uint8Array(buffer.length);
+      for (let i = 0; i < buffer.length; i++) {
+        metadataArray[i] = buffer[i];
+      }
+      
+      const pdf = await getDocumentProxy(metadataArray);
+      const metadata = await pdf.getMetadata();
+      const info = metadata?.info as Record<string, unknown> | undefined;
+      if (info) {
+        title = typeof info.Title === 'string' ? info.Title : undefined;
+        author = typeof info.Author === 'string' ? info.Author : undefined;
+        if (info.CreationDate && typeof info.CreationDate === 'string') {
+          const dateStr = info.CreationDate;
+          if (dateStr.startsWith('D:')) {
+            const year = dateStr.substring(2, 6);
+            const month = dateStr.substring(6, 8);
+            const day = dateStr.substring(8, 10);
+            createdAt = `${year}-${month}-${day}`;
+          }
+        }
+      }
+    } catch {
+      // Metadata extraction is optional, continue without it
+    }
     
     // Extract sections from text
     const sections = extractSections(text);
     
-    // Get date info
-    const dateNode = infoResult.getDateNode();
-    
     return {
       text,
       metadata: {
-        pageCount: infoResult.total,
-        title: extractTitle(text) || infoResult.info?.Title,
-        author: infoResult.info?.Author || undefined,
-        createdAt: dateNode.CreationDate?.toISOString() || undefined,
+        pageCount: totalPages,
+        title: extractTitle(text) || title,
+        author,
+        createdAt,
       },
       sections,
     };
   } catch (error) {
     console.error('PDF parsing error:', error);
-    throw new Error('Failed to parse PDF document');
-  } finally {
-    // Clean up resources
-    if (parser) {
-      await parser.destroy();
-    }
+    throw new Error(`Failed to parse PDF document: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
 

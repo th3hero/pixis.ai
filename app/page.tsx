@@ -7,7 +7,7 @@ function getWelcomeMessage(): ChatMessage {
   return {
     id: uuidv4(),
     role: 'assistant',
-    content: `# Welcome to DeckForge AI! 🎯
+    content: `# Welcome to Pixis AI! 🎯
 
 I'm your AI-powered presentation assistant. I can help you transform your business documents into polished, **McKinsey-style slide decks**.
 

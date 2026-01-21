@@ -14,9 +14,6 @@ export interface BrandColors {
   background: string;
   text: string;
   textLight: string;
-  success?: string;
-  warning?: string;
-  error?: string;
 }
 
 export interface BrandTypography {
@@ -35,7 +32,6 @@ export interface BrandTypography {
     caption: number;
   };
   lineHeight: number;
-  letterSpacing?: number;
 }
 
 export interface BrandLogo {
@@ -53,26 +49,26 @@ export interface ExtractedStyle {
   rawGuidelines?: string;
 }
 
-// McKinsey-style defaults
-export const MCKINSEY_STYLE: BrandStyle = {
-  id: 'mckinsey-default',
-  name: 'McKinsey Style',
+// Dark Corporate Theme (used for generated presentations)
+export const DARK_CORPORATE_STYLE: BrandStyle = {
+  id: 'dark-corporate',
+  name: 'Dark Corporate',
   colors: {
-    primary: '#003366',      // Deep blue
-    secondary: '#0066CC',    // Bright blue
-    accent: '#00A3E0',       // Light blue
-    background: '#FFFFFF',   // White
-    text: '#333333',         // Dark gray
-    textLight: '#666666',    // Medium gray
+    primary: '#0a1628',
+    secondary: '#1a2744',
+    accent: '#f5b800',
+    background: '#0a1628',
+    text: '#ffffff',
+    textLight: '#94a3b8',
   },
   typography: {
-    headingFont: 'Georgia',
+    headingFont: 'Arial',
     bodyFont: 'Arial',
     headingSizes: {
-      h1: 44,
-      h2: 32,
-      h3: 24,
-      h4: 20,
+      h1: 48,
+      h2: 36,
+      h3: 28,
+      h4: 22,
     },
     bodySizes: {
       large: 18,
@@ -80,6 +76,6 @@ export const MCKINSEY_STYLE: BrandStyle = {
       small: 12,
       caption: 10,
     },
-    lineHeight: 1.4,
+    lineHeight: 1.5,
   },
 };

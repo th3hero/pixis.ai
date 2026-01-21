@@ -1,7 +1,6 @@
 import { generateContent, generateStructuredContent } from './gemini-client';
 import {
   ANALYZE_DOCUMENT_PROMPT,
-  COMBINE_DOCUMENTS_PROMPT,
   GENERATE_SLIDES_PROMPT,
   REFINE_SLIDE_PROMPT,
   INTENT_CLASSIFICATION_PROMPT,

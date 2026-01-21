@@ -70,6 +70,7 @@ export interface SlideStyle {
   secondaryColor: string;
   accentColor: string;
   backgroundColor: string;
+  foreground?: string; // Text color for dark themes
   fontFamily: {
     heading: string;
     body: string;

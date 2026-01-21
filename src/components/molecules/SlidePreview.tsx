@@ -11,9 +11,9 @@ interface SlidePreviewProps {
 }
 
 const sizeClasses = {
-  sm: 'w-32 h-18',
-  md: 'w-48 h-27',
-  lg: 'w-64 h-36',
+  sm: 'w-24 md:w-32 h-[54px] md:h-[72px]',
+  md: 'w-36 md:w-48 h-[81px] md:h-[108px]',
+  lg: 'w-48 md:w-64 h-[108px] md:h-[144px]',
 };
 
 export const SlidePreview = memo(function SlidePreview({
@@ -27,17 +27,19 @@ export const SlidePreview = memo(function SlidePreview({
     <div
       onClick={onClick}
       className={cn(
-        'relative rounded-lg overflow-hidden cursor-pointer transition-all duration-200',
-        'border-2 shadow-sm hover:shadow-md',
+        'relative rounded-md md:rounded-lg overflow-hidden cursor-pointer transition-all duration-200',
+        'border-2 shadow-sm hover:shadow-lg',
         sizeClasses[size],
-        isActive ? 'border-indigo-500 ring-2 ring-indigo-200' : 'border-gray-200 hover:border-indigo-300'
+        isActive 
+          ? 'border-primary ring-2 ring-primary/30 shadow-primary/20' 
+          : 'border-border hover:border-primary/50'
       )}
       style={{ aspectRatio: '16/9' }}
     >
       <SlidePreviewContent slide={slide} style={style} />
       
       {/* Slide number badge */}
-      <div className="absolute bottom-1 right-1 px-1.5 py-0.5 bg-black/50 rounded text-[8px] text-white font-medium">
+      <div className="absolute bottom-0.5 right-0.5 md:bottom-1 md:right-1 px-1 md:px-1.5 py-0.5 bg-black/60 rounded text-[6px] md:text-[8px] text-white font-medium">
         {slide.order}
       </div>
     </div>
@@ -45,24 +47,31 @@ export const SlidePreview = memo(function SlidePreview({
 });
 
 function SlidePreviewContent({ slide, style }: { slide: SlideContent; style: SlideStyle }) {
-  const scale = 0.15; // Scale factor for preview
+  const scale = 0.15;
 
+  // Title slide - dark theme
   if (slide.type === 'title') {
     return (
       <div
-        className="w-full h-full flex flex-col items-center justify-center p-2"
+        className="w-full h-full flex flex-col p-2"
         style={{ backgroundColor: style.primaryColor }}
       >
         <p
-          className="text-white font-bold text-center leading-tight"
-          style={{ fontSize: `${style.fontSize.title * scale}px` }}
+          className="font-bold leading-tight"
+          style={{ fontSize: `${style.fontSize.title * scale}px`, color: style.accentColor }}
+        >
+          PIXIS
+        </p>
+        <p
+          className="text-white font-bold leading-tight mt-1"
+          style={{ fontSize: `${style.fontSize.title * scale * 0.8}px` }}
         >
           {truncate(slide.title, 40)}
         </p>
         {slide.subtitle && (
           <p
-            className="text-white/80 text-center mt-1"
-            style={{ fontSize: `${style.fontSize.subheading * scale}px` }}
+            className="mt-0.5"
+            style={{ fontSize: `${style.fontSize.subheading * scale}px`, color: style.accentColor }}
           >
             {truncate(slide.subtitle, 30)}
           </p>
@@ -71,11 +80,15 @@ function SlidePreviewContent({ slide, style }: { slide: SlideContent; style: Sli
     );
   }
 
+  // Section header - dark theme
   if (slide.type === 'section-header') {
     return (
-      <div className="w-full h-full flex flex-col items-start justify-center p-2 bg-white">
+      <div 
+        className="w-full h-full flex flex-col justify-center"
+        style={{ backgroundColor: style.primaryColor }}
+      >
         <div
-          className="w-full py-1 px-2 -mx-2"
+          className="py-1 px-2"
           style={{ backgroundColor: style.secondaryColor }}
         >
           <p
@@ -89,13 +102,16 @@ function SlidePreviewContent({ slide, style }: { slide: SlideContent; style: Sli
     );
   }
 
-  // Default content slide preview
+  // Default content slide - dark theme
   return (
-    <div className="w-full h-full flex flex-col bg-white">
+    <div 
+      className="w-full h-full flex flex-col"
+      style={{ backgroundColor: style.primaryColor }}
+    >
       {/* Header */}
       <div
         className="px-2 py-1"
-        style={{ backgroundColor: style.primaryColor }}
+        style={{ backgroundColor: style.secondaryColor }}
       >
         <p
           className="text-white font-semibold truncate"
@@ -104,6 +120,9 @@ function SlidePreviewContent({ slide, style }: { slide: SlideContent; style: Sli
           {truncate(slide.title, 45)}
         </p>
       </div>
+      
+      {/* Accent line */}
+      <div className="h-px" style={{ backgroundColor: style.accentColor }} />
       
       {/* Content preview */}
       <div className="flex-1 p-1.5 overflow-hidden">
@@ -116,15 +135,12 @@ function SlidePreviewContent({ slide, style }: { slide: SlideContent; style: Sli
                   <div key={j} className="flex items-start gap-0.5">
                     <span
                       className="shrink-0 mt-0.5"
-                      style={{ 
-                        color: style.accentColor,
-                        fontSize: '4px'
-                      }}
+                      style={{ color: style.accentColor, fontSize: '4px' }}
                     >
                       •
                     </span>
                     <span
-                      className="text-gray-700 leading-tight"
+                      className="text-white/80 leading-tight"
                       style={{ fontSize: `${style.fontSize.body * scale * 0.8}px` }}
                     >
                       {truncate(item.text, 40)}

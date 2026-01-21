@@ -1,4 +1,4 @@
-export const CHAT_SYSTEM_PROMPT = `You are DeckForge AI, an expert presentation assistant specializing in creating McKinsey-style executive presentations.
+export const CHAT_SYSTEM_PROMPT = `You are Pixis AI, an expert presentation assistant specializing in creating McKinsey-style executive presentations.
 
 Your capabilities:
 1. Analyze business documents (RFPs, proposals, reports)
@@ -65,7 +65,7 @@ Guidelines:
 - Use markdown formatting for readability
 - Include next steps or suggestions
 
-Respond naturally as DeckForge AI.`;
+Respond naturally as Pixis AI.`;
 
 export const ERROR_RECOVERY_PROMPT = `The previous operation encountered an issue.
 

@@ -1,12 +1,11 @@
 'use client';
 
-import { FileText, Trash2, Sparkles } from 'lucide-react';
+import { FileText, Sparkles } from 'lucide-react';
 import { Button } from '@/src/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/src/components/ui/card';
-import { ScrollArea } from '@/src/components/ui/scroll-area';
-import { Separator } from '@/src/components/ui/separator';
 import { FileUploader, UploadedFileCard } from '@/src/components/molecules';
-import { UploadedDocument } from '@/src/types';
+import { SlideCarouselMini } from './SlideCarouselMini';
+import { UploadedDocument, GeneratedDeck } from '@/src/types';
 
 interface DocumentPanelProps {
   documents: UploadedDocument[];
@@ -16,6 +15,11 @@ interface DocumentPanelProps {
   isUploading: boolean;
   isGenerating: boolean;
   canGenerate: boolean;
+  // New props for slide preview
+  currentDeck?: GeneratedDeck | null;
+  onExport?: () => void;
+  isExporting?: boolean;
+  onExpandSlides?: () => void;
 }
 
 export function DocumentPanel({
@@ -26,32 +30,49 @@ export function DocumentPanel({
   isUploading,
   isGenerating,
   canGenerate,
+  currentDeck,
+  onExport,
+  isExporting = false,
+  onExpandSlides,
 }: DocumentPanelProps) {
   const rfpDocs = documents.filter(d => d.type === 'rfp' || d.type === 'proposal');
   const styleDocs = documents.filter(d => d.type === 'style-guide' || d.type === 'reference-deck');
 
   return (
-    <div className="h-full flex flex-col bg-gray-50/50">
-      <div className="p-4 border-b border-gray-100 bg-white">
-        <h2 className="font-semibold text-gray-900 flex items-center gap-2">
-          <FileText className="h-5 w-5 text-indigo-600" />
+    <div className="h-full flex flex-col bg-sidebar overflow-hidden">
+      {/* Fixed Header */}
+      <div className="p-3 border-b border-sidebar-border shrink-0 hidden lg:block">
+        <h2 className="font-semibold text-sidebar-foreground flex items-center gap-2 text-sm">
+          <FileText className="h-4 w-4 text-primary" />
           Documents
         </h2>
-        <p className="text-sm text-muted-foreground mt-1">
+        <p className="text-xs text-muted-foreground mt-0.5">
           Upload your source documents and style guides
         </p>
       </div>
 
-      <ScrollArea className="flex-1">
-        <div className="p-4 space-y-6">
+      {/* Scrollable Content */}
+      <div className="flex-1 overflow-y-auto min-h-0">
+        <div className="p-3 space-y-3">
+          {/* Slide Preview Card - shown when deck exists */}
+          {currentDeck && onExport && (
+            <SlideCarouselMini
+              deck={currentDeck}
+              onExport={onExport}
+              onRegenerate={onGenerate}
+              isExporting={isExporting}
+              onExpand={onExpandSlides}
+            />
+          )}
+
           {/* Upload Section */}
-          <Card className="border-gray-100 shadow-sm">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-gray-700">
+          <Card className="border-border bg-secondary/30">
+            <CardHeader className="p-3 pb-2">
+              <CardTitle className="text-sm font-medium text-foreground">
                 Add Document
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-3 pt-0">
               <FileUploader
                 onUpload={onUpload}
                 isUploading={isUploading}
@@ -61,12 +82,12 @@ export function DocumentPanel({
 
           {/* Source Documents */}
           {rfpDocs.length > 0 && (
-            <div className="space-y-3">
-              <h3 className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-indigo-500" />
+            <div className="space-y-2">
+              <h3 className="text-xs font-medium text-foreground flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-primary" />
                 Source Documents ({rfpDocs.length})
               </h3>
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 {rfpDocs.map((doc) => (
                   <UploadedFileCard
                     key={doc.id}
@@ -80,12 +101,12 @@ export function DocumentPanel({
 
           {/* Style Documents */}
           {styleDocs.length > 0 && (
-            <div className="space-y-3">
-              <h3 className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-purple-500" />
+            <div className="space-y-2">
+              <h3 className="text-xs font-medium text-foreground flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-accent" />
                 Style References ({styleDocs.length})
               </h3>
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 {styleDocs.map((doc) => (
                   <UploadedFileCard
                     key={doc.id}
@@ -98,10 +119,10 @@ export function DocumentPanel({
           )}
 
           {/* Empty State */}
-          {documents.length === 0 && (
-            <div className="text-center py-8">
-              <div className="w-16 h-16 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                <FileText className="h-8 w-8 text-gray-400" />
+          {documents.length === 0 && !currentDeck && (
+            <div className="text-center py-6">
+              <div className="w-12 h-12 mx-auto bg-secondary rounded-full flex items-center justify-center mb-3 border border-border">
+                <FileText className="h-6 w-6 text-muted-foreground" />
               </div>
               <p className="text-sm text-muted-foreground">
                 No documents uploaded yet
@@ -112,29 +133,29 @@ export function DocumentPanel({
             </div>
           )}
         </div>
-      </ScrollArea>
+      </div>
 
-      {/* Generate Button */}
-      <div className="p-4 border-t border-gray-100 bg-white">
+      {/* Fixed Generate Button */}
+      <div className="p-3 border-t border-sidebar-border shrink-0">
         <Button
           onClick={onGenerate}
           disabled={!canGenerate || isGenerating}
-          className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 h-12 text-base font-medium"
+          className="w-full bg-gradient-to-r from-primary to-cyan-400 hover:from-primary/90 hover:to-cyan-400/90 text-background h-10 text-sm font-medium shadow-lg shadow-primary/25 disabled:opacity-50 disabled:shadow-none transition-all"
         >
           {isGenerating ? (
             <>
-              <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
+              <div className="h-4 w-4 border-2 border-background/30 border-t-background rounded-full animate-spin mr-2" />
               Generating...
             </>
           ) : (
             <>
-              <Sparkles className="h-5 w-5 mr-2" />
-              Generate Presentation
+              <Sparkles className="h-4 w-4 mr-2" />
+              {currentDeck ? 'Regenerate Presentation' : 'Generate Presentation'}
             </>
           )}
         </Button>
         {!canGenerate && documents.length === 0 && (
-          <p className="text-xs text-muted-foreground text-center mt-2">
+          <p className="text-[10px] text-muted-foreground text-center mt-1.5">
             Upload at least one document to generate
           </p>
         )}

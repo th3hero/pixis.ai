@@ -1,7 +1,6 @@
 import { GoogleGenerativeAI, GenerativeModel, GenerationConfig } from '@google/generative-ai';
 
 let genAI: GoogleGenerativeAI | null = null;
-let model: GenerativeModel | null = null;
 
 const DEFAULT_CONFIG: GenerationConfig = {
   temperature: 0.7,
@@ -21,10 +20,12 @@ export function getGeminiClient(): GoogleGenerativeAI {
   return genAI;
 }
 
-export function getModel(modelName: string = 'gemini-1.5-flash'): GenerativeModel {
+export function getModel(modelName?: string): GenerativeModel {
   const client = getGeminiClient();
+  // Use environment variable or default to gemini-2.0-flash
+  const model = modelName || process.env.GEMINI_MODEL || 'gemini-2.0-flash';
   return client.getGenerativeModel({ 
-    model: modelName,
+    model,
     generationConfig: DEFAULT_CONFIG,
   });
 }

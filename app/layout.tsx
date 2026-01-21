@@ -1,21 +1,23 @@
 import type { Metadata } from "next";
-import { Inter, Playfair_Display } from "next/font/google";
+import { Inter, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
 });
 
-const playfair = Playfair_Display({
-  variable: "--font-playfair",
+const spaceGrotesk = Space_Grotesk({
+  variable: "--font-space-grotesk",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
-  title: "DeckForge AI - Transform Documents into McKinsey-Style Presentations",
+  title: "Pixis AI - Transform Documents into McKinsey-Style Presentations",
   description: "AI-powered solution that transforms business documents, RFPs, and proposals into polished, executive-ready slide decks.",
-  keywords: ["AI", "presentation", "slides", "McKinsey", "business", "documents", "RFP"],
+  keywords: ["AI", "presentation", "slides", "McKinsey", "business", "documents", "RFP", "Pixis"],
 };
 
 export default function RootLayout({
@@ -26,7 +28,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${inter.variable} ${playfair.variable} font-sans antialiased`}
+        className={`${inter.variable} ${spaceGrotesk.variable} antialiased`}
       >
         {children}
       </body>

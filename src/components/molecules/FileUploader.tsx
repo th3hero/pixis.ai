@@ -17,12 +17,12 @@ interface FileUploaderProps {
 }
 
 const fileTypeIcons: Record<string, React.ReactNode> = {
-  'application/pdf': <FileText className="h-5 w-5 text-red-500" />,
+  'application/pdf': <FileText className="h-4 w-4 text-red-400" />,
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document': (
-    <FileText className="h-5 w-5 text-blue-500" />
+    <FileText className="h-4 w-4 text-blue-400" />
   ),
   'application/vnd.openxmlformats-officedocument.presentationml.presentation': (
-    <Presentation className="h-5 w-5 text-orange-500" />
+    <Presentation className="h-4 w-4 text-orange-400" />
   ),
 };
 
@@ -84,10 +84,10 @@ export function FileUploader({
             key={value}
             variant={selectedType === value ? 'default' : 'outline'}
             className={cn(
-              'cursor-pointer transition-all',
+              'cursor-pointer transition-all text-xs',
               selectedType === value
-                ? 'bg-indigo-600 hover:bg-indigo-700'
-                : 'hover:bg-indigo-50'
+                ? 'bg-primary text-background hover:bg-primary/90'
+                : 'border-border text-muted-foreground hover:bg-secondary hover:text-foreground'
             )}
             onClick={() => setSelectedType(value as UploadedDocument['type'])}
           >
@@ -102,28 +102,28 @@ export function FileUploader({
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         className={cn(
-          'relative border-2 border-dashed rounded-xl p-6 transition-all duration-200',
-          'flex flex-col items-center justify-center gap-3 text-center',
+          'relative border-2 border-dashed rounded-xl p-4 transition-all duration-200',
+          'flex flex-col items-center justify-center gap-2 text-center',
           isDragging
-            ? 'border-indigo-500 bg-indigo-50'
-            : 'border-gray-200 hover:border-indigo-300 hover:bg-gray-50',
+            ? 'border-primary bg-primary/10'
+            : 'border-border hover:border-primary/50 hover:bg-secondary/30',
           isUploading && 'opacity-50 pointer-events-none'
         )}
       >
         {isUploading ? (
           <>
             <Spinner size="lg" />
-            <p className="text-sm text-muted-foreground">Processing document...</p>
+            <p className="text-xs text-muted-foreground">Processing...</p>
           </>
         ) : (
           <>
-            <div className="p-3 bg-indigo-100 rounded-full">
-              <Upload className="h-6 w-6 text-indigo-600" />
+            <div className="p-2.5 bg-primary/10 rounded-full border border-primary/20">
+              <Upload className="h-5 w-5 text-primary" />
             </div>
-            <div>
-              <p className="text-sm font-medium text-gray-700">
-                Drop your file here, or{' '}
-                <label className="text-indigo-600 hover:text-indigo-700 cursor-pointer underline">
+            <div className="space-y-1">
+              <p className="text-xs font-medium text-foreground">
+                Drop file here, or{' '}
+                <label className="text-primary hover:text-primary/80 cursor-pointer underline underline-offset-2">
                   browse
                   <input
                     type="file"
@@ -133,8 +133,8 @@ export function FileUploader({
                   />
                 </label>
               </p>
-              <p className="text-xs text-muted-foreground mt-1">
-                PDF, DOCX, or PPTX up to 10MB
+              <p className="text-[10px] text-muted-foreground">
+                PDF, DOCX, PPTX (max 10MB)
               </p>
             </div>
           </>
@@ -150,28 +150,30 @@ interface UploadedFileCardProps {
 }
 
 export function UploadedFileCard({ document, onRemove }: UploadedFileCardProps) {
-  const icon = fileTypeIcons[document.mimeType] || <File className="h-5 w-5" />;
+  const icon = fileTypeIcons[document.mimeType] || <File className="h-4 w-4 text-muted-foreground" />;
   const sizeKB = Math.round(document.size / 1024);
 
   return (
-    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
-      <div className="p-2 bg-white rounded-lg shadow-sm">{icon}</div>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-gray-900 truncate">{document.name}</p>
-        <div className="flex items-center gap-2 mt-0.5">
-          <Badge variant="secondary" className="text-xs">
+    <div className="flex items-center gap-2 p-2.5 bg-secondary/50 rounded-lg border border-border">
+      <div className="p-1.5 bg-background rounded-md border border-border shrink-0">{icon}</div>
+      <div className="flex-1 min-w-0 overflow-hidden">
+        <p className="text-xs font-medium text-foreground truncate" title={document.name}>
+          {document.name}
+        </p>
+        <div className="flex items-center gap-1.5 mt-0.5">
+          <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-secondary text-muted-foreground">
             {document.type}
           </Badge>
-          <span className="text-xs text-muted-foreground">{sizeKB} KB</span>
+          <span className="text-[10px] text-muted-foreground">{sizeKB} KB</span>
         </div>
       </div>
       <Button
         variant="ghost"
-        size="icon-sm"
+        size="icon"
         onClick={() => onRemove(document.id)}
-        className="text-gray-400 hover:text-red-500"
+        className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
       >
-        <X className="h-4 w-4" />
+        <X className="h-3.5 w-3.5" />
       </Button>
     </div>
   );

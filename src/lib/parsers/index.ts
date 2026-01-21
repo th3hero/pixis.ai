@@ -1,7 +1,7 @@
 import { ParsedDocument } from '@/src/types';
 import { parsePDF } from './pdf-parser';
 import { parseDOCX } from './docx-parser';
-import { extractTextFromPPTX, extractStyleFromPPTX } from './pptx-parser';
+import { extractTextFromPPTX } from './pptx-parser';
 
 export async function parseDocument(
   buffer: Buffer,
@@ -16,7 +16,6 @@ export async function parseDocument(
       return parseDOCX(buffer);
     
     case 'application/vnd.openxmlformats-officedocument.presentationml.presentation':
-      // For PPTX, extract text content
       const text = await extractTextFromPPTX(buffer);
       return {
         text,
@@ -38,4 +37,4 @@ export async function parseDocument(
 
 export { parsePDF } from './pdf-parser';
 export { parseDOCX } from './docx-parser';
-export { extractStyleFromPPTX, extractTextFromPPTX } from './pptx-parser';
+export { extractTextFromPPTX } from './pptx-parser';
